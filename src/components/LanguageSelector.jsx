@@ -7,7 +7,7 @@ export default function LanguageSelector() {
   const selectedLanguage = useSelector((state) => state.language.value)
   const dispatch = useDispatch()
 
-  const languages = ["JavaScript", "C++", "Java", "Python"]
+  const languages = ["JavaScript", "Cpp", "Java", "Python"]
 
   const handleLanguageSelect = (language) => {
     dispatch(setLanguage(language))

@@ -8,6 +8,9 @@ export default function CodeEditor() {
   const code = useSelector((state) => state.code.value)
   const dispatch = useDispatch()
 
+  // Define indentation (customize as needed: "\t" for tab, "  " for 2 spaces, etc.)
+  const INDENT = "  " // 2 spaces is a common standard
+
   // Debounced handler for textarea changes
   const handleTextAreaChange = useCallback(
     (e) => {
@@ -15,6 +18,62 @@ export default function CodeEditor() {
       dispatch(setCode(value))
     },
     [dispatch]
+  )
+
+  // Handle Tab and Shift+Tab key presses
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault() // Prevent focus shift
+        const textarea = textareaRef.current
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+
+        if (start === end) {
+          // No selection: insert indent at cursor
+          const newValue = code.substring(0, start) + INDENT + code.substring(end)
+          dispatch(setCode(newValue))
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = start + INDENT.length
+          }, 0)
+        } else {
+          // Selection: indent all selected lines
+          const lines = code.split("\n")
+          const startLine = code.substring(0, start).split("\n").length - 1
+          const endLine = code.substring(0, end).split("\n").length - 1
+          let newCode = ""
+
+          if (e.shiftKey) {
+            // Shift+Tab: unindent selected lines
+            for (let i = 0; i < lines.length; i++) {
+              if (i >= startLine && i <= endLine && lines[i].startsWith(INDENT)) {
+                lines[i] = lines[i].substring(INDENT.length)
+              }
+              newCode += (i > 0 ? "\n" : "") + lines[i]
+            }
+          } else {
+            // Tab: indent selected lines
+            for (let i = 0; i < lines.length; i++) {
+              if (i >= startLine && i <= endLine) {
+                lines[i] = INDENT + lines[i]
+              }
+              newCode += (i > 0 ? "\n" : "") + lines[i]
+            }
+          }
+
+          dispatch(setCode(newCode))
+
+          // Adjust selection after indent/unindent
+          setTimeout(() => {
+            const newStart = newCode.indexOf(lines[startLine])
+            const newEnd = newCode.indexOf(lines[endLine]) + lines[endLine].length
+            textarea.selectionStart = newStart
+            textarea.selectionEnd = newEnd
+          }, 0)
+        }
+      }
+    },
+    [code, dispatch, INDENT]
   )
 
   // Update line numbers when code changes
@@ -45,7 +104,16 @@ export default function CodeEditor() {
           ))}
         </div>
         {/* Code editor */}
-        <textarea ref={textareaRef} className="w-full p-4 text-white bg-transparent outline-none font-mono text-sm resize-none overflow-hidden" value={code} onChange={handleTextAreaChange} placeholder="Write your code here..." aria-label="Code editor" spellCheck={false}/>
+        <textarea
+          ref={textareaRef}
+          className="w-full p-4 text-white bg-transparent outline-none font-mono text-sm resize-none overflow-hidden"
+          value={code}
+          onChange={handleTextAreaChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Write your code here..."
+          aria-label="Code editor"
+          spellCheck={false}
+        />
       </div>
     </div>
   )

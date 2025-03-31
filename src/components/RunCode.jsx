@@ -6,7 +6,6 @@ export const RunCode = () => {
   const code = useSelector((state) => state.code.value)
   const selectedLanguage = useSelector((state) => state.language.value)
   const language = selectedLanguage.toLowerCase()
-  const encodedCode = btoa(code)
   const handleRunCode = async () => {
     if (!code.trim()) {
       console.error("Code is empty. Please write some code before running.")
@@ -14,7 +13,7 @@ export const RunCode = () => {
     }
 
     try {
-      const response = await submitCode({ code: encodedCode, language }).unwrap()
+      const response = await submitCode({ code, language }).unwrap()
       console.log("Code executed successfully:", response)
     } catch (err) {
       console.error("Error executing code:", err)
